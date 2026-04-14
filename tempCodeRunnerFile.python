@@ -1,0 +1,128 @@
+from flask import Flask,render_template,request,redirect,session,flash
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+import json
+import os
+from datetime import datetime
+
+local_server=True
+
+# with open('config.json','r') as f:
+#     parames = json.load(f)["params"]
+
+
+
+app = Flask(__name__)
+app.secret_key='super-secret-key'
+# app.config['upload']=parames['upload']
+if(local_server==True):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./student.db'
+# else:
+#     app.config['SQLALCHEMY_DATABASE_URI'] = parames['online_uri']
+db = SQLAlchemy(app)
+
+
+class Student(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    name=db.Column(db.String(60), unique = False, nullable = False)
+    hashed_password=db.Column(db.String(60), unique = False, nullable = False)
+    email=db.Column(db.String(20), nullable = True)
+    date=db.Column(db.String(12), nullable = True)
+class Teacher(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    hashed_password=db.Column(db.String(60), unique = False, nullable = False)
+    name=db.Column(db.String(32),unique = False,nullable = False)
+
+class Course(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    name=db.Column(db.String(32),unique = True,nullable = False)
+    teacherid=db.Column(db.String(32),unique = True, nullable = False)
+    sem=db.Column(db.Integer,nullable=False)
+
+class Enroll(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    courseid=db.Column(db.String(32),unique = True,nullable = False)
+    studentid=db.Column(db.String(32),unique = True, nullable = False)
+    marks=db.Column(db.Integer)
+    
+class Marks(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    courseid=db.Column(db.String(32),nullable = False)
+    studentid=db.Column(db.String(32), nullable = False)
+    intmarks=db.Column(db.Integer)
+    extmarks=db.Column(db.Integer)
+    midmarks=db.Column(db.Integer)
+
+class Payment(db.Model):
+    sno=db.Column(db.Integer,primary_key=True)
+    studentid=db.Column(db.String(32), nullable = False)
+    paymentmode=db.Column(db.String(32), nullable = False)
+    paymenttype=db.Column(db.String(32), nullable = False)
+    referenceid=db.Column(db.String(32), nullable = False)
+    status=db.Column(db.String(32), nullable = False)
+    sem=db.Column(db.Integer)
+    amount=db.Column(db.Integer)
+    
+@app.route("/add")
+def add():
+    s1 = Student(name="Rahul", hashed_password="123")
+    db.session.add(s1)
+    db.session.commit()
+    return "done"
+
+@app.route("/show")
+def show():
+    s1 = Teacher.query.all()
+    output = ""
+    for s in s1:
+        output += f"{s.sno} - {s.name} - {s.hashed_password}<br>"
+    return output
+
+@app.route("/home")
+def home():
+   
+    return render_template("home.html")
+
+@app.route("/login",methods=['POST','GET'])
+def login():
+
+    if request.method == 'POST':
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        user=Student.query.filter_by(name=username).first()
+        role="Student"
+        if not user:
+            user=Teacher.query.filter_by(name=username).first()
+            role="Teacher"
+        if user:
+            if password == user.hashed_password:
+                session['user']=username
+                session['role']=role
+                return render_template("home.html")
+            else:
+
+                flash('Wrong Password')
+        else:
+
+            print("User not found")
+    return render_template("login.html")
+
+@app.route("/result",methods=['GET'])
+def result():
+    print("successfull")
+
+@app.route("/payment",methods=['GET'])
+def payment1():
+    print("successfull")
+
+@app.route("/logout",methods=['GET'])
+def logout():
+    print("successfull")
+
+with app.app_context():
+    db.create_all()
+
+if __name__ == "__main__":
+    app.run(debug=True,host='127.0.0.1',port=5555)
+    
