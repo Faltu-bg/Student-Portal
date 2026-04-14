@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 import json
 import os
 from datetime import datetime
+from flask_login import login_user,current_user,logout_user,LoginManager,UserMixin,login_required
 
 local_server=True
 
@@ -21,17 +22,33 @@ if(local_server==True):
 #     app.config['SQLALCHEMY_DATABASE_URI'] = parames['online_uri']
 db = SQLAlchemy(app)
 
+logman=LoginManager()
+logman.init_app(app)
+logman.login_view="login"
 
-class Student(db.Model):
+
+@logman.user_loader
+def load_user(user_id):
+    role,id=user_id.split("-")
+    if role=="student":
+        return Student.query.get(int(id))
+    elif role=="teacher":
+        return Teacher.query.get(int(id))
+
+class Student(db.Model,UserMixin):
     sno=db.Column(db.Integer,primary_key=True)
     name=db.Column(db.String(60), unique = False, nullable = False)
     hashed_password=db.Column(db.String(60), unique = False, nullable = False)
     email=db.Column(db.String(20), nullable = True)
     date=db.Column(db.String(12), nullable = True)
-class Teacher(db.Model):
+    def get_id(self):
+        return f"student-{self.sno}"
+class Teacher(db.Model,UserMixin):
     sno=db.Column(db.Integer,primary_key=True)
     hashed_password=db.Column(db.String(60), unique = False, nullable = False)
     name=db.Column(db.String(32),unique = False,nullable = False)
+    def get_id(self):
+        return f"teacher-{self.sno}"
 
 class Course(db.Model):
     sno=db.Column(db.Integer,primary_key=True)
@@ -71,14 +88,16 @@ def add():
     return "done"
 
 @app.route("/show")
+@login_required
 def show():
-    s1 = Teacher.query.all()
+    s1 = Student.query.all()
     output = ""
     for s in s1:
         output += f"{s.sno} - {s.name} - {s.hashed_password}<br>"
     return output
 
 @app.route("/home")
+@login_required
 def home():
    
     return render_template("home.html")
@@ -97,9 +116,8 @@ def login():
             role="Teacher"
         if user:
             if password == user.hashed_password:
-                session['user']=username
-                session['role']=role
-                return render_template("home.html")
+                login_user(user)
+                return redirect("/home")
             else:
 
                 flash('Wrong Password')
