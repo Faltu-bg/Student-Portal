@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fee Status</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 30px;
+        }
+
+        table {
+            width: 60%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .paid {
+            color: green;
+            font-weight: bold;
+        }
+
+        .not-paid {
+            color: red;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Semester Fee Status</h1>
+
+<table>
+    <tr>
+        <th>Semester</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+
+    {% for sem in range(1, 9) %}
+
+    <tr>
+        <td>Semester {{ sem }}</td>
+
+        <!-- STATUS -->
+        <td>
+            {% if sem_status.get(sem) == "paid" %}
+                <span class="paid">PAID ✅</span>
+            {% else %}
+                <span class="not-paid">NOT PAID ❌</span>
+            {% endif %}
+        </td>
+
+        <!-- ACTION -->
+        <td>
+            {% if sem_status.get(sem) != "paid" %}
+
+                <form action="/create-payment" method="POST">
+                    <input type="hidden" name="sem" value="{{ sem }}">
+                    <button type="submit">Pay Fees</button>
+                </form>
+
+            {% else %}
+                <button disabled>Completed</button>
+            {% endif %}
+        </td>
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+</body>
+</html>

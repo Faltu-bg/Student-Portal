@@ -35,60 +35,116 @@ def load_user(user_id):
     elif role=="teacher":
         return Teacher.query.get(int(id))
 
-class Student(db.Model,UserMixin):
-    sno=db.Column(db.Integer,primary_key=True)
-    name=db.Column(db.String(60), unique = False, nullable = False)
-    hashed_password=db.Column(db.String(60), unique = False, nullable = False)
-    email=db.Column(db.String(20), nullable = True)
-    date=db.Column(db.String(12), nullable = True)
+class Student(db.Model, UserMixin):
+    sno = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(60), nullable=False)
+    hashed_password = db.Column(db.String(60), nullable=False)
+    email = db.Column(db.String(50))
+    date = db.Column(db.String(12))
+
+    enrollments = db.relationship('Enroll', back_populates='student', cascade="all, delete")
+    payments = db.relationship('Payment', back_populates='student', cascade="all, delete")
+    marks = db.relationship('Marks', back_populates='student', cascade="all, delete")
+
     def get_id(self):
         return f"student-{self.sno}"
-class Teacher(db.Model,UserMixin):
-    sno=db.Column(db.Integer,primary_key=True)
-    hashed_password=db.Column(db.String(60), unique = False, nullable = False)
-    name=db.Column(db.String(32),unique = False,nullable = False)
+
+
+class Teacher(db.Model, UserMixin):
+    __tablename__ = "teacher"
+
+    sno = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False)
+    hashed_password = db.Column(db.String(60), nullable=False)
+
+    courses = db.relationship('Course', back_populates='teacher', cascade="all, delete")
+
     def get_id(self):
         return f"teacher-{self.sno}"
 
+
 class Course(db.Model):
-    sno=db.Column(db.Integer,primary_key=True)
-    name=db.Column(db.String(32),unique = True,nullable = False)
-    teacherid=db.Column(db.String(32),unique = True, nullable = False)
-    sem=db.Column(db.Integer,nullable=False)
+    __tablename__ = "course"
+
+    sno = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), unique=True, nullable=False)
+    sem = db.Column(db.Integer, nullable=False)
+
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teacher.sno'), nullable=False)
+
+    teacher = db.relationship('Teacher', back_populates='courses')
+    enrollments = db.relationship('Enroll', back_populates='course', cascade="all, delete")
+    marks = db.relationship('Marks', back_populates='course', cascade="all, delete")
+
 
 class Enroll(db.Model):
-    sno=db.Column(db.Integer,primary_key=True)
-    courseid=db.Column(db.String(32),unique = True,nullable = False)
-    studentid=db.Column(db.String(32),unique = True, nullable = False)
-    marks=db.Column(db.Integer)
-    
+    __tablename__ = "enroll"
+
+    sno = db.Column(db.Integer, primary_key=True)
+
+    student_id = db.Column(db.Integer, db.ForeignKey('student.sno'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.sno'), nullable=False)
+
+    marks = db.Column(db.Integer)
+
+    student = db.relationship('Student', back_populates='enrollments')
+    course = db.relationship('Course', back_populates='enrollments')
+
+    __table_args__ = (
+        db.UniqueConstraint('student_id', 'course_id', name='unique_enrollment'),
+    )
+
+
 class Marks(db.Model):
-    sno=db.Column(db.Integer,primary_key=True)
-    courseid=db.Column(db.String(32),nullable = False)
-    studentid=db.Column(db.String(32), nullable = False)
-    intmarks=db.Column(db.Integer)
-    extmarks=db.Column(db.Integer)
-    midmarks=db.Column(db.Integer)
+    __tablename__ = "marks"
+
+    sno = db.Column(db.Integer, primary_key=True)
+
+    student_id = db.Column(db.Integer, db.ForeignKey('student.sno'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.sno'), nullable=False)
+
+    intmarks = db.Column(db.Integer)
+    extmarks = db.Column(db.Integer)
+    midmarks = db.Column(db.Integer)
+
+    student = db.relationship('Student', back_populates='marks')
+    course = db.relationship('Course', back_populates='marks')
+
 
 class Payment(db.Model):
-    sno=db.Column(db.Integer,primary_key=True)
-    studentid=db.Column(db.String(32), nullable = False)
-    paymentmode=db.Column(db.String(32), nullable = False)
-    paymenttype=db.Column(db.String(32), nullable = False)
-    referenceid=db.Column(db.String(32), nullable = False)
-    status=db.Column(db.String(32), nullable = False)
-    sem=db.Column(db.Integer)
-    amount=db.Column(db.Integer)
+    __tablename__ = "payment"
+
+    sno = db.Column(db.Integer, primary_key=True)
+
+    student_id = db.Column(db.Integer, db.ForeignKey('student.sno'), nullable=False)
+
+    paymentmode = db.Column(db.String(32), nullable=False)
+    paymenttype = db.Column(db.String(32), nullable=False)
+    referenceid = db.Column(db.String(32), nullable=False)
+    status = db.Column(db.String(32), nullable=False)
+
+    sem = db.Column(db.Integer)
+    amount = db.Column(db.Integer)
+
+    student = db.relationship('Student', back_populates='payments')
+
+def is_fees_paid(student_id, sem):
+        payment = Payment.query.filter_by(
+        student_id=student_id,
+        sem=sem,
+        status="success"
+        ).first()
+
+        return payment is not None
     
 @app.route("/add")
 def add():
-    s1 = Student(name="Rahul", hashed_password="123")
+    s1 = Student(sno=1,name="Rahul", hashed_password="123")
     db.session.add(s1)
     db.session.commit()
     return "done"
 
 @app.route("/show")
-@login_required
 def show():
     s1 = Student.query.all()
     output = ""
@@ -109,11 +165,9 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         
-        user=Student.query.filter_by(name=username).first()
-        role="Student"
+        user=Student.query.filter_by(sno=username).first()
         if not user:
             user=Teacher.query.filter_by(name=username).first()
-            role="Teacher"
         if user:
             if password == user.hashed_password:
                 login_user(user)
@@ -127,18 +181,110 @@ def login():
     return render_template("login.html")
 
 @app.route("/result",methods=['GET'])
+@login_required
 def result():
-    print("successfull")
+    return "successfull"
 
 @app.route("/payment",methods=['GET'])
+@login_required
 def payment1():
-    print("successfull")
+    i=current_user.sno
+    pay=Payment.query.filter_by(student_id=i).all()
+
+
+    sem_status = {}
+
+    for p in pay:
+        if p.sem not in sem_status:
+            sem_status[p.sem] = "pending"
+
+        if p.status == "success":
+            sem_status[p.sem] = "paid"
+
+    return render_template("payment.html",pay=pay,sem_status=sem_status)
+  
 
 @app.route("/logout",methods=['GET'])
+@login_required
 def logout():
+    logout_user()
     print("successfull")
 
+
+@app.route("/seed-db")
+def seed_db():
+
+    # Students
+    s1 = Student(
+        name="Rahul Sharma",
+        hashed_password="123",
+        email="rahul@example.com",
+        date="2026-01-01"
+    )
+
+    s2 = Student(
+        name="Aman Patel",
+        hashed_password="123",
+        email="aman@example.com",
+        date="2026-01-02"
+    )
+
+    # Teacher
+    t1 = Teacher(
+        name="Dr. Mehta",
+        hashed_password="teacher123"
+    )
+
+    db.session.add_all([s1, s2, t1])
+    db.session.commit()
+
+    # Courses (after teacher exists)
+    c1 = Course(name="Mathematics", sem=1, teacher_id=t1.sno)
+    c2 = Course(name="Physics", sem=1, teacher_id=t1.sno)
+    c3 = Course(name="Database Systems", sem=2, teacher_id=t1.sno)
+
+    db.session.add_all([c1, c2, c3])
+    db.session.commit()
+
+    # Payments
+    p1 = Payment(
+        student_id=s1.sno,
+        paymentmode="online",
+        paymenttype="fees",
+        referenceid="TXN1001",
+        status="success",
+        sem=1,
+        amount=5000
+    )
+
+    p2 = Payment(
+        student_id=s1.sno,
+        paymentmode="online",
+        paymenttype="fees",
+        referenceid="TXN1002",
+        status="pending",
+        sem=2,
+        amount=5000
+    )
+
+    p3 = Payment(
+        student_id=s2.sno,
+        paymentmode="online",
+        paymenttype="fees",
+        referenceid="TXN2001",
+        status="failed",
+        sem=1,
+        amount=5000
+    )
+
+    db.session.add_all([p1, p2, p3])
+    db.session.commit()
+
+    return "Database seeded successfully ✅"
+
+
 with app.app_context():
+    # db.drop_all()
     db.create_all()
 
 if __name__ == "__main__":
