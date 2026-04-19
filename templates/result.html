@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Results</title>
+    <style>
+        body { font-family: Arial; margin: 30px; }
+        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        th { background: #f2f2f2; }
+        select { padding: 8px; margin: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Welcome {{ student.name }}</h2>
+
+<!-- Semester Filter -->
+<label>Select Semester:</label>
+<select id="semFilter" onchange="filterTable()">
+    <option value="all">All</option>
+    {% for sem in sems %}
+        <option value="{{ sem }}">{{ sem }}</option>
+    {% endfor %}
+</select>
+
+<table id="resultTable">
+    <tr>
+        <th>Course</th>
+        <th>Semester</th>
+        <th>Internal</th>
+        <th>Mid</th>
+        <th>External</th>
+        <th>Total</th>
+    </tr>
+
+    {% for mark, course in marks_data %}
+    <tr data-sem="{{ course.sem }}">
+        <td>{{ course.name }}</td>
+        <td>{{ course.sem }}</td>
+        <td>{{ mark.intmarks }}</td>
+        <td>{{ mark.midmarks }}</td>
+        <td>{{ mark.extmarks }}</td>
+        <td>
+            {{ (mark.intmarks or 0) + (mark.midmarks or 0) + (mark.extmarks or 0) }}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+function filterTable() {
+    let sem = document.getElementById("semFilter").value;
+    let rows = document.querySelectorAll("#resultTable tr[data-sem]");
+
+    rows.forEach(row => {
+        if (sem === "all" || row.dataset.sem === sem) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+</script>
+
+</body>
+</html>

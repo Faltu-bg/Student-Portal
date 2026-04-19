@@ -180,10 +180,38 @@ def login():
             print("User not found")
     return render_template("login.html")
 
-@app.route("/result",methods=['GET'])
+# @app.route("/result",methods=['GET'])
+# @login_required
+# def result():
+#     i=current_user.sno
+#     student = Student.query.get(student_id)
+#     students=Student.query.filter_by(sno=i).first()
+#     marks_data=Marks.query.filter_by(sno=i).all()
+#     sem=Course.query.filter_by(sno=i).first()
+#     return render_template("result.html",sem=sem,students=students,marks_data=marks_data)
+
+@app.route("/result", methods=['GET'])
 @login_required
 def result():
-    return "successfull"
+
+    student_id = current_user.sno
+
+    student = Student.query.get(student_id)
+    if not student:
+        return "Student not found", 404
+
+    marks_data = db.session.query(Marks, Course).join(Course).filter(
+        Marks.student_id == student_id
+    ).all()
+
+    sems = sorted({course.sem for _, course in marks_data})
+
+    return render_template(
+        "result.html",
+        student=student,
+        marks_data=marks_data,
+        sems=sems
+    )
 
 @app.route("/payment",methods=['GET'])
 @login_required
@@ -204,83 +232,13 @@ def payment1():
     return render_template("payment.html",pay=pay,sem_status=sem_status)
   
 
+
 @app.route("/logout",methods=['GET'])
 @login_required
 def logout():
     logout_user()
     print("successfull")
 
-
-@app.route("/seed-db")
-def seed_db():
-
-    # Students
-    s1 = Student(
-        name="Rahul Sharma",
-        hashed_password="123",
-        email="rahul@example.com",
-        date="2026-01-01"
-    )
-
-    s2 = Student(
-        name="Aman Patel",
-        hashed_password="123",
-        email="aman@example.com",
-        date="2026-01-02"
-    )
-
-    # Teacher
-    t1 = Teacher(
-        name="Dr. Mehta",
-        hashed_password="teacher123"
-    )
-
-    db.session.add_all([s1, s2, t1])
-    db.session.commit()
-
-    # Courses (after teacher exists)
-    c1 = Course(name="Mathematics", sem=1, teacher_id=t1.sno)
-    c2 = Course(name="Physics", sem=1, teacher_id=t1.sno)
-    c3 = Course(name="Database Systems", sem=2, teacher_id=t1.sno)
-
-    db.session.add_all([c1, c2, c3])
-    db.session.commit()
-
-    # Payments
-    p1 = Payment(
-        student_id=s1.sno,
-        paymentmode="online",
-        paymenttype="fees",
-        referenceid="TXN1001",
-        status="success",
-        sem=1,
-        amount=5000
-    )
-
-    p2 = Payment(
-        student_id=s1.sno,
-        paymentmode="online",
-        paymenttype="fees",
-        referenceid="TXN1002",
-        status="pending",
-        sem=2,
-        amount=5000
-    )
-
-    p3 = Payment(
-        student_id=s2.sno,
-        paymentmode="online",
-        paymenttype="fees",
-        referenceid="TXN2001",
-        status="failed",
-        sem=1,
-        amount=5000
-    )
-
-    db.session.add_all([p1, p2, p3])
-    db.session.commit()
-
-    return "Database seeded successfully ✅"
 
 
 with app.app_context():
