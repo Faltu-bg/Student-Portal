@@ -1,0 +1,2 @@
+def atime():
+    print("hello")
