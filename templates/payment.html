@@ -85,7 +85,7 @@
 async function payNow(sem) {
 
     // Step 1: Call backend to create order
-    const response = await fetch("/create_order", {
+    const response = await fetch("/payment/create_order", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

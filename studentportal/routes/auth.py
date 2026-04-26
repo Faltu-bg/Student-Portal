@@ -1,6 +1,6 @@
 from flask import Blueprint,request,flash,redirect,render_template
 from flask_login import login_required,logout_user,login_user
-from studentportal.models import Student,Teacher
+from studentportal.models import *
 
 auth_bp=Blueprint("auth",__name__)
 
@@ -15,7 +15,7 @@ def login():
         if user:
             if password == user.hashed_password:
                 login_user(user)
-                return redirect("/home")
+                return redirect("/")
             else:
 
                 flash('Wrong Password')

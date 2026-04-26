@@ -1,6 +1,6 @@
 from flask import Blueprint,render_template,request,jsonify
 from flask_login import login_required,current_user
-from studentportal.models import Payment
+from studentportal.models import *
 from studentportal import db
 import razorpay
 from studentportal.fees import is_fees_paid
@@ -26,6 +26,28 @@ def payment1():
             sem_status[p.sem] = "paid"
 
     return render_template("payment.html",pay=pay,sem_status=sem_status)
+
+
+@pay_bp.route('/create_order', methods=['POST'])
+def create_order():
+    data = request.get_json()
+    sem = data['semester']
+
+    amount = 50000  # or vary by semester
+
+    order_data = {
+        "amount": amount,
+        "currency": "INR",
+        "receipt": f"sem_{sem}"
+    }
+
+    order = client.order.create(data=order_data)
+
+    return jsonify({
+        "order_id": order['id'],
+        "amount": amount,
+        "key": "key"
+    })
 
 @pay_bp.route('/verify_payment', methods=['POST'])
 @login_required
