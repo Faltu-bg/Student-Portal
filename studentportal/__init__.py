@@ -1,10 +1,12 @@
 from flask import Flask
 from flask_login import LoginManager
 from studentportal.db import db
-from studentportal.models import Student,Teacher
+from studentportal.models import *
+import os
 
 def create_app():
-    app= Flask(__name__)
+    template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
+    app= Flask(__name__,template_folder=template_path)
     app.secret_key='super-secret-key'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./student.db'
 
@@ -27,10 +29,10 @@ def create_app():
 
         return None
 
-    from studentportal.routes import auth_bp,pay_bp
+    from studentportal.routes import auth_bp,pay_bp,student_bp
 
     app.register_blueprint(auth_bp,url_prefix='/auth')
     app.register_blueprint(pay_bp,url_prefix='/payment')
-    
+    app.register_blueprint(student_bp)
 
     return app
