@@ -66,8 +66,7 @@
         <td>
             {% if sem_status.get(sem) != "paid" %}
 
-                <button onclick="payNow({{ sem }})">pay </button>
-                </form>
+                <button onclick="payNow({{ sem }})">Pay Now </button>
 
             {% else %}
                 <button disabled>Completed</button>
@@ -93,6 +92,10 @@ async function payNow(sem) {
         },
         body: JSON.stringify({ semester: sem })
     });
+    if(!response.ok){
+        alert("failed to create a order");
+        return;
+    }
 
     const data = await response.json();
 
@@ -144,6 +147,10 @@ async function payNow(sem) {
 
     // Step 4: Open Razorpay popup
     const rzp = new Razorpay(options);
+    rzp.on('payment.failed',function(response){
+        alert("Payment failed");
+        console.log(response.error);
+    });
     rzp.open();
 }
 </script>
