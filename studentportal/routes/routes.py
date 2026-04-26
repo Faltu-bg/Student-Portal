@@ -1,2 +1,0 @@
-def atime():
-    print("hello")
