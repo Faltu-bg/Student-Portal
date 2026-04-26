@@ -233,6 +233,24 @@ def create_order():
     })
 
 
+
+# @app.route("/create-payment/<int:payment_id>", methods=['POST'])
+# @login_required
+# def paying(payment_id):
+
+#     payment = Payment.query.filter_by(
+#         sno=payment_id,
+#         student_id=current_user.sno
+#     ).first()
+
+#     if not payment:
+#         return "Payment not found", 404
+
+#     payment.status = "success"
+#     db.session.commit()
+
+#     return redirect("/payment")
+
 @app.route("/payment",methods=['GET'])
 @login_required
 def payment1():
@@ -251,6 +269,21 @@ def payment1():
 
     return render_template("payment.html",pay=pay,sem_status=sem_status)
   
+# @app.route('/verify_payment', methods=['POST'])
+# def verify_payment():
+#     data = request.get_json()
+
+#     order_id = data['razorpay_order_id']
+#     payment_id = data['razorpay_payment_id']
+#     signature = data['razorpay_signature']
+#     sem = data['semester']
+
+#     # verify signature here...
+
+#     # if valid:
+#     print("Paid");
+
+#     return jsonify({"status": "Payment successful"})
 
 @app.route('/verify_payment', methods=['POST'])
 @login_required
@@ -263,7 +296,7 @@ def verify_payment():
     sem = data['semester']
 
     try:
-       
+        # Step 1: Verify signature (IMPORTANT)
         params_dict = {
             'razorpay_order_id': order_id,
             'razorpay_payment_id': payment_id,
@@ -272,6 +305,7 @@ def verify_payment():
 
         client.utility.verify_payment_signature(params_dict)
 
+        # Step 2: Save payment in DB
         new_payment = Payment(
             student_id=current_user.sno,
             paymentmode="online",

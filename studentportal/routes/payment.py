@@ -2,7 +2,9 @@ from flask import Blueprint,render_template,request,jsonify
 from flask_login import login_required,current_user
 from studentportal.models import Payment
 from studentportal import db
-from razorpay import razorpay
+import razorpay
+from studentportal.fees import is_fees_paid
+
 
 pay_bp=Blueprint("payment",__name__)
 client = razorpay.Client(auth=("your-key", "razorpay-key"))
@@ -35,7 +37,7 @@ def verify_payment():
     signature = data.get('razorpay_signature')
     sem = data.get('semester')
     if sem is None:
-        return jsonify({"Missing semester"}),400
+        return jsonify({"error": "Missing semester"}), 400
     sem=int(sem)
 
     try:
@@ -48,13 +50,7 @@ def verify_payment():
 
         client.utility.verify_payment_signature(params_dict)
 
-        existing = Payment.query.filter_by(
-            student_id=current_user.sno,
-            sem=sem,
-            status="success"
-        ).first()
-
-        if existing:
+        if is_fees_paid(current_user.sno, sem):
             return jsonify({"status": "Already paid"}), 400
 
         
