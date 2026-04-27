@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Student Result</title>
+
     <style>
         body {
             font-family: Arial;
@@ -49,6 +50,16 @@
             margin: 5px 0;
         }
 
+        .filter-box {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        select {
+            padding: 5px;
+            font-size: 14px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -81,9 +92,7 @@
 
     <!-- Header -->
     <div class="header">
-        <div class="logo">
-            <!-- Add logo image here -->
-        </div>
+        <div class="logo"></div>
         <div class="college-name">
             COLLEGE NAME
         </div>
@@ -92,52 +101,70 @@
     <!-- Student Info -->
     <div class="info">
         <p><strong>Name:</strong> {{ student.name }}</p>
-        <p><strong>Enrollment No:</strong> {{ student.enroll }}</p>
-        <p><strong>Branch:</strong> {{ student.branch }}</p>
-        <p><strong>Semester:</strong> {{ student.sem }}</p>
+        <p><strong>Enrollment No:</strong> {{ student.sno }}</p>
+        <p><strong>Semester:</strong> 
+            {% if selected_sem %}
+                {{ selected_sem }}
+            {% else %}
+                All
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- ✅ Semester Filter -->
+    <div class="filter-box">
+        <form method="GET">
+            <label><strong>Select Semester:</strong></label>
+            <select name="sem" onchange="this.form.submit()">
+                <option value="">All</option>
+                {% for sem in sems %}
+                    <option value="{{ sem }}"
+                        {% if selected_sem == sem %}selected{% endif %}>
+                        Semester {{ sem }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
 
     <!-- Table -->
-
-        <!-- Table -->
-<table>
-    <tr>
-        <th>Subject Name</th>
-        <th>Subject Code</th>
-        <th>Internal</th>
-        <th>Mid</th>
-        <th>External</th>
-        <th>Total</th>
-    </tr>
-
-    {% for mark, course in marks_data %}
-    <tr>
-        <td>{{ course.name }}</td>
-        <td>{{ course.sno }}</td>
-        <td>{{ mark.intmarks }}</td>
-        <td>{{ mark.midmarks }}</td>
-        <td>{{ mark.extmarks }}</td>
-        <td>
-            {{ (mark.intmarks or 0) + (mark.midmarks or 0) + (mark.extmarks or 0) }}
-        </td>
-    </tr>
-    {% endfor %}
-
-    <!-- Fill empty rows if less than 6 subjects -->
-    {% if marks_data|length < 6 %}
-        {% for i in range(6 - marks_data|length) %}
+    <table>
         <tr>
-            <td>&nbsp;</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <th>Subject Name</th>
+            <th>Subject Code</th>
+            <th>Internal</th>
+            <th>Mid</th>
+            <th>External</th>
+            <th>Total</th>
+        </tr>
+
+        {% for mark, course in marks_data %}
+        <tr>
+            <td>{{ course.name }}</td>
+            <td>{{ course.sno }}</td>
+            <td>{{ mark.intmarks }}</td>
+            <td>{{ mark.midmarks }}</td>
+            <td>{{ mark.extmarks }}</td>
+            <td>
+                {{ (mark.intmarks or 0) + (mark.midmarks or 0) + (mark.extmarks or 0) }}
+            </td>
         </tr>
         {% endfor %}
-    {% endif %}
 
-</table>
+        <!-- Fill empty rows -->
+        {% if marks_data|length < 6 %}
+            {% for i in range(6 - marks_data|length) %}
+            <tr>
+                <td>&nbsp;</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+
     </table>
 
     <!-- Footer -->
