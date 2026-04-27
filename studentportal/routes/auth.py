@@ -9,12 +9,17 @@ def login():
     if request.method=='POST':
         username = request.form.get("username")
         password = request.form.get("password")
+        print("FORM DATA:", request.form)
+        print("USERNAME:", username)
+        print("PASSWORD:", password)
         user=Student.query.filter_by(sno=username).first()
         if not user:
             user=Teacher.query.filter_by(name=username).first()
+       
         if user:
             if password == user.hashed_password:
                 login_user(user)
+                print(f"Logged in user: {user}")
                 return redirect("/")
             else:
 
@@ -29,3 +34,4 @@ def login():
 def logout():
     logout_user()
     print("successfull")
+    return redirect("/auth/login")

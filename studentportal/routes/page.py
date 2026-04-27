@@ -1,5 +1,5 @@
 from flask import Blueprint,render_template
-from studentportal.models import Student,Course,Marks
+from studentportal.models import *
 from flask_login import login_required,current_user
 from studentportal.db import db
 

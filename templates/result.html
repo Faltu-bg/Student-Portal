@@ -1,32 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Results</title>
+    <title>Student Result</title>
     <style>
-        body { font-family: Arial; margin: 30px; }
-        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-        th { background: #f2f2f2; }
-        select { padding: 8px; margin: 10px; }
+        body {
+            font-family: Arial;
+            margin: 30px;
+        }
+
+        .container {
+            width: 700px;
+            border: 2px solid black;
+            padding: 10px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border: 1px solid black;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .college-name {
+            flex: 1;
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            border-left: 2px solid black;
+            border-right: 2px solid black;
+            padding: 10px;
+        }
+
+        .info {
+            margin-top: 10px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
+
+        .info p {
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 2px solid black;
+            padding-top: 10px;
+        }
     </style>
 </head>
+
 <body>
 
-<h2>Welcome {{ student.name }}</h2>
+<div class="container">
 
-<!-- Semester Filter -->
-<label>Select Semester:</label>
-<select id="semFilter" onchange="filterTable()">
-    <option value="all">All</option>
-    {% for sem in sems %}
-        <option value="{{ sem }}">{{ sem }}</option>
-    {% endfor %}
-</select>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <!-- Add logo image here -->
+        </div>
+        <div class="college-name">
+            COLLEGE NAME
+        </div>
+    </div>
 
-<table id="resultTable">
+    <!-- Student Info -->
+    <div class="info">
+        <p><strong>Name:</strong> {{ student.name }}</p>
+        <p><strong>Enrollment No:</strong> {{ student.enroll }}</p>
+        <p><strong>Branch:</strong> {{ student.branch }}</p>
+        <p><strong>Semester:</strong> {{ student.sem }}</p>
+    </div>
+
+    <!-- Table -->
+
+        <!-- Table -->
+<table>
     <tr>
-        <th>Course</th>
-        <th>Semester</th>
+        <th>Subject Name</th>
+        <th>Subject Code</th>
         <th>Internal</th>
         <th>Mid</th>
         <th>External</th>
@@ -34,9 +111,9 @@
     </tr>
 
     {% for mark, course in marks_data %}
-    <tr data-sem="{{ course.sem }}">
+    <tr>
         <td>{{ course.name }}</td>
-        <td>{{ course.sem }}</td>
+        <td>{{ course.sno }}</td>
         <td>{{ mark.intmarks }}</td>
         <td>{{ mark.midmarks }}</td>
         <td>{{ mark.extmarks }}</td>
@@ -45,22 +122,31 @@
         </td>
     </tr>
     {% endfor %}
+
+    <!-- Fill empty rows if less than 6 subjects -->
+    {% if marks_data|length < 6 %}
+        {% for i in range(6 - marks_data|length) %}
+        <tr>
+            <td>&nbsp;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        {% endfor %}
+    {% endif %}
+
 </table>
+    </table>
 
-<script>
-function filterTable() {
-    let sem = document.getElementById("semFilter").value;
-    let rows = document.querySelectorAll("#resultTable tr[data-sem]");
+    <!-- Footer -->
+    <div class="footer">
+        <div><strong>SPI:</strong> {{ spi }}</div>
+        <div><strong>CPI:</strong> {{ cpi }}</div>
+    </div>
 
-    rows.forEach(row => {
-        if (sem === "all" || row.dataset.sem === sem) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
-    });
-}
-</script>
+</div>
 
 </body>
 </html>
