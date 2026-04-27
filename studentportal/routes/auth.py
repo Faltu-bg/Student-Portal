@@ -23,7 +23,7 @@ def login():
                 return redirect("/")
             else:
 
-                flash('Wrong Password')
+                flash('Invalid Credentials')
         else:
 
             print("User not found")
