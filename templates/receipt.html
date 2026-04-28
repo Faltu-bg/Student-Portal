@@ -85,7 +85,7 @@
             display: block;
             margin: 20px auto;
             padding: 10px 20px;
-            background: #0f9d58;
+            background: #0f8a9d;
             color: white;
             border: none;
             cursor: pointer;
@@ -94,6 +94,16 @@
         @media print {
             .btn { display: none; }
         }
+        @media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .header {
+        background: linear-gradient(135deg, #e6e6e6 60%, #0f9d58 40%) !important;
+    }
+}
     </style>
 </head>
 
@@ -106,8 +116,8 @@
         <div class="logo">LOGO</div>
 
         <div class="contact">
-            {{ company_email }} <br>
-            {{ company_phone }}
+            company_email <br>
+             company_phone 
         </div>
     </div>
 
@@ -120,7 +130,7 @@
     <table>
         <tr>
             <td>Received From</td>
-            <td>{{ payment.student.name }}</td>
+            <td>{{ student.name }}</td>
         </tr>
 
         <tr>
@@ -150,7 +160,7 @@
 
         <tr>
             <td>Date</td>
-            <td>{{ payment_date }}</td>
+            <td> payment_date </td>
         </tr>
     </table>
 
@@ -163,7 +173,7 @@
 
     <!-- FOOTER -->
     <div class="footer">
-        <p><strong>Issued by:</strong> {{ company_name }}</p>
+        <p><strong>Issued by:</strong> company_name </p>
         <p>For inquiries, contact support.</p>
     </div>
 

@@ -17,15 +17,21 @@ def payment1():
 
 
     sem_status = {}
-
+    sem_payment={}
     for p in pay:
         if p.sem not in sem_status:
             sem_status[p.sem] = "pending"
 
         if p.status == "success":
             sem_status[p.sem] = "paid"
+            sem_payment[p.sem] = p
 
-    return render_template("payment.html",pay=pay,sem_status=sem_status)
+    return render_template(
+        "payment.html",
+        pay=pay,
+        sem_status=sem_status,
+        sem_payment=sem_payment
+        )
 
 
 @pay_bp.route('/create_order', methods=['POST'])
@@ -94,3 +100,15 @@ def verify_payment():
     except Exception as e:
         print(e)
         return jsonify({"status": "Verification failed"})
+
+
+@pay_bp.route("/download_receipt/<int:receipt>")
+def download_receipt(receipt):
+    print(f"{receipt}")
+    user=current_user.sno
+    student = Student.query.get(user)
+    payment=Payment.query.filter_by(student_id=user, sno=receipt).first()
+    if not payment:
+        return "Unauthorized or receipt not found", 404
+
+    return render_template("receipt.html",student=student,payment=payment)
