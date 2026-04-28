@@ -1,82 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Fee Status</title>
+<meta charset="UTF-8">
+<title>Fee Status</title>
 
-    <style>
-        body { font-family: Arial; margin: 30px; }
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-        table {
-            width: 60%;
-            border-collapse: collapse;
-        }
 
-        th, td {
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: center;
-        }
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f5f9ff, #eef6ff);
+    margin: 0;
+    padding: 30px;
+}
 
-        th { background-color: #f2f2f2; }
+/* TITLE */
+h1 {
+    text-align: center;
+    color: #1e3a8a;
+    margin-bottom: 25px;
+}
 
-        .paid {
-            color: green;
-            font-weight: bold;
-        }
+/* TABLE WRAPPER */
+.table-container {
+    width: 85%;
+    margin: auto;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
 
-        .not-paid {
-            color: red;
-            font-weight: bold;
-        }
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-        button {
-            padding: 6px 12px;
-            cursor: pointer;
-        }
-    </style>
+/* HEADER */
+th {
+    background: #cfe6ff;
+    color: #1e3a8a;
+    padding: 14px;
+    font-size: 15px;
+}
+
+/* ROWS */
+td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid #eef2ff;
+    font-size: 14px;
+}
+
+tr:hover {
+    background: #f3f8ff;
+}
+
+/* STATUS */
+.paid {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.pending {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* BUTTON */
+button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.pay-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.pay-btn:hover {
+    background: #2563eb;
+}
+
+.disabled-btn {
+    background: #e5e7eb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* BADGE EFFECT */
+.badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+.receipt-btn {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: #60a5fa; /* light blue */
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.receipt-btn:hover {
+    background: #3b82f6; /* slightly darker on hover */
+}
+
+.receipt-btn:hover {
+    background: #15803d;
+}
+</style>
 </head>
 
 <body>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<h1>Semester Fee Status</h1>
 
-<table>
-    <tr>
-        <th>Semester</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
+<div class="container mt-4 p-4">
 
-    {% for sem in range(1, 9) %}
+<h3 class="mb-4">Semester Fee Payment</h3>
 
-    <tr>
-        <td>Semester {{ sem }}</td>
+<table class="table table-bordered text-center">
 
-        <!-- STATUS -->
-        <td>
-            {% if sem_status.get(sem) == "paid" %}
-                <span class="paid">PAID ✅</span>
-            {% else %}
-                <span class="not-paid">NOT PAID ❌</span>
-            {% endif %}
-        </td>
+<tr>
+    <th>Semester</th>
+    <th>Status</th>
+    <th>Action</th>
+    <th>Receipt</th>
+</tr>
 
-        <!-- ACTION -->
-        <td>
-            {% if sem_status.get(sem) != "paid" %}
+{% for sem in range(1,9) %}
 
-                <button onclick="payNow({{ sem }})">Pay Now </button>
+<tr>
 
-            {% else %}
-                <button disabled>Completed</button>
-            {% endif %}
-        </td>
-    </tr>
+    <td>Semester {{ sem }}</td>
 
-    {% endfor %}
+    <td>
+        {% if sem_status.get(sem) == "paid" %}
+            <span class="badge bg-success">Paid</span>
+            
+
+        {% else %}
+            <span class="badge bg-danger">Pending</span>
+        {% endif %}
+    </td>
+
+    <td>
+        {% if sem_status.get(sem) != "paid" %}
+            <button class="btn btn-primary btn-sm" onclick="payNow({{ sem }})">
+                Pay Fee
+            </button>
+        {% else %}
+            <button class="btn btn-secondary btn-sm" disabled>Done</button>
+        {% endif %}
+    </td>
+     <td>
+        {% if sem_status.get(sem) == "paid" %}
+            
+            <a href="/download_receipt/{{ sem }}" class="receipt-btn">
+    📄 Download Receipt
+</a>
+{%else %}
+            <span style="color: #9ca3af;">Not Available</span>
+        {% endif %}
+    </td>
+</tr>
+
+{% endfor %}
 
 </table>
+
+</div>
 
 </body>
 </html>
@@ -84,39 +184,31 @@
 <script>
 async function payNow(sem) {
 
-    // Step 1: Call backend to create order
-    const response = await fetch("/payment/create_order", {
+    const response = await fetch("/create_order", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({ semester: sem })
     });
-    if(!response.ok){
-        alert("failed to create a order");
+
+    if (!response.ok) {
+        alert("Failed to create order");
         return;
     }
 
     const data = await response.json();
 
-    // Step 2: Configure Razorpay
     const options = {
         key: data.key,
         amount: data.amount,
         currency: "INR",
         order_id: data.order_id,
 
-        name: "College Fees",
-        description: "Semester " + sem + " Fees",
-        prefill: {
-        name: "Student Name",
-        email: "student@email.com"
-    },
-
+        name: "College Fee Portal",
+        description: "Semester " + sem + " Fee Payment",
 
         handler: function (response) {
-
-            // Step 3: Send payment data to backend
             fetch("/verify_payment", {
                 method: "POST",
                 headers: {
@@ -127,12 +219,10 @@ async function payNow(sem) {
                     semester: sem
                 })
             })
-
-            
             .then(res => res.json())
             .then(data => {
                 if (data.status === "Payment successful") {
-                    alert("Payment successful!");
+                    alert("Payment Successful 🎉");
                     location.reload();
                 } else {
                     alert("Verification failed!");
@@ -141,16 +231,11 @@ async function payNow(sem) {
         },
 
         theme: {
-            color: "#3399cc"
+            color: "#3b82f6"
         }
     };
 
-    // Step 4: Open Razorpay popup
     const rzp = new Razorpay(options);
-    rzp.on('payment.failed',function(response){
-        alert("Payment failed");
-        console.log(response.error);
-    });
     rzp.open();
 }
 </script>

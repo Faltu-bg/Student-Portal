@@ -5,51 +5,60 @@
 
     <style>
         body {
-            font-family: Arial;
-            margin: 30px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f4f4f4;
         }
 
+        /* MAIN CONTAINER */
         .container {
-            width: 700px;
+            width: 800px;
+            margin: auto;
+            background: white;
             border: 2px solid black;
-            padding: 10px;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
+        /* HEADER */
         .header {
             display: flex;
             align-items: center;
             border-bottom: 2px solid black;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
         }
 
         .logo {
-            width: 60px;
-            height: 60px;
-            border: 1px solid black;
+            width: 70px;
+            height: 70px;
+            border: 2px solid black;
             border-radius: 50%;
-            margin-right: 15px;
         }
 
         .college-name {
             flex: 1;
             text-align: center;
             font-weight: bold;
-            font-size: 20px;
-            border-left: 2px solid black;
-            border-right: 2px solid black;
-            padding: 10px;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
+        /* INFO */
         .info {
-            margin-top: 10px;
-            border-bottom: 2px solid black;
-            padding-bottom: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid black;
+            display: flex;
+            justify-content: space-between;
         }
 
         .info p {
-            margin: 5px 0;
+            margin: 0;
         }
 
+        /* FILTER */
         .filter-box {
             margin-top: 10px;
             margin-bottom: 10px;
@@ -60,28 +69,73 @@
             font-size: 14px;
         }
 
+        /* TABLE */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
+            margin-top: 15px;
+            table-layout: fixed;
         }
 
         th {
-            background-color: #f2f2f2;
+            background: black;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
         }
 
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        /* FOOTER */
         .footer {
-            margin-top: 10px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
+            font-weight: bold;
+            font-size: 15px;
             border-top: 2px solid black;
             padding-top: 10px;
+        }
+
+        /* BUTTON */
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* PRINT SETTINGS */
+        @media print {
+
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+
+            .container {
+                width: 100%;
+                border: none;
+            }
+
+            .filter-box,
+            button {
+                display: none;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -90,15 +144,16 @@
 
 <div class="container">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <div class="header">
         <div class="logo"></div>
         <div class="college-name">
-            COLLEGE NAME
+            COLLEGE NAME<br>
+            <span style="font-size:14px;">Examination Result</span>
         </div>
     </div>
 
-    <!-- Student Info -->
+    <!-- STUDENT INFO -->
     <div class="info">
         <p><strong>Name:</strong> {{ student.name }}</p>
         <p><strong>Enrollment No:</strong> {{ student.sno }}</p>
@@ -111,7 +166,7 @@
         </p>
     </div>
 
-    <!-- ✅ Semester Filter -->
+    <!-- FILTER -->
     <div class="filter-box">
         <form method="GET">
             <label><strong>Select Semester:</strong></label>
@@ -127,11 +182,11 @@
         </form>
     </div>
 
-    <!-- Table -->
+    <!-- TABLE -->
     <table>
         <tr>
-            <th>Subject Name</th>
-            <th>Subject Code</th>
+            <th>Subject</th>
+            <th>Code</th>
             <th>Internal</th>
             <th>Mid</th>
             <th>External</th>
@@ -151,7 +206,6 @@
         </tr>
         {% endfor %}
 
-        <!-- Fill empty rows -->
         {% if marks_data|length < 6 %}
             {% for i in range(6 - marks_data|length) %}
             <tr>
@@ -164,15 +218,19 @@
             </tr>
             {% endfor %}
         {% endif %}
-
     </table>
 
-    <!-- Footer -->
+    <!-- FOOTER -->
     <div class="footer">
-        <div><strong>SPI:</strong> {{ spi }}</div>
-        <div><strong>CPI:</strong> {{ cpi }}</div>
+        <div>SPI: {{ spi }}</div>
+        <div>CPI: {{ cpi }}</div>
     </div>
 
+</div>
+
+<!-- PRINT BUTTON -->
+<div style="text-align:center; margin-top:20px;">
+    <button onclick="window.print()">Print / Save as PDF</button>
 </div>
 
 </body>
