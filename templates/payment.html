@@ -161,14 +161,15 @@ button {
         {% endif %}
     </td>
      <td>
-        {% if sem_status.get(sem) == "paid" %}
-            
-            <a href="/download_receipt/{{ sem }}" class="receipt-btn">
-    📄 Download Receipt
-</a>
-{%else %}
-            <span style="color: #9ca3af;">Not Available</span>
-        {% endif %}
+       
+    {% if sem_status.get(sem) == "paid" and sem_payment.get(sem) %}
+        <a href="/payment/download_receipt/{{ sem_payment[sem].sno }}" class="receipt-btn">
+            📄 Download Receipt
+        </a>
+    {% else %}
+        <span style="color: #9ca3af;">Not Available</span>
+    {% endif %}
+
     </td>
 </tr>
 
