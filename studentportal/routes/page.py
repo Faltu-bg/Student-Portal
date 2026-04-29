@@ -66,3 +66,13 @@ def result():
         sems=all_sems,
         selected_sem=selected_sem
     )
+
+@student_bp.route("/profile")
+def profile():
+    
+    return render_template("profile.html") 
+
+@student_bp.route("/password")
+def password():
+
+    return render_template("passwordpage.html")

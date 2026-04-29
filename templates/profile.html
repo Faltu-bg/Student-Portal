@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Profile Settings</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6fb;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 240px;
+    background: linear-gradient(135deg, #0d8bdc, #6a2c91);
+    color: white;
+    padding: 30px 20px;
+}
+
+.sidebar h3 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 20px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 30px;
+}
+
+.profile-card {
+    display: flex;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+/* LEFT */
+.profile-left {
+    width: 25%;
+    text-align: center;
+    padding: 30px;
+    border-right: 1px solid #eee;
+}
+
+.profile-left img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    cursor: pointer;
+    object-fit: cover;
+}
+
+.profile-left p {
+    color: gray;
+}
+
+/* CENTER */
+.profile-form {
+    width: 75%;
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.row .form-group {
+    flex: 1;
+}
+
+.btn {
+    background: linear-gradient(135deg, #0d8bdc, #6a2c91);
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Upload hidden */
+.upload-box {
+    display: none;
+    margin-top: 15px;
+}
+.readonly {
+    background-color: #f1f1f1;
+    cursor: not-allowed;
+    color: #555;
+}
+
+</style>
+
+<script>
+function showUpload() {
+    document.getElementById("uploadBox").style.display = "block";
+}
+</script>
+
+</head>
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h3>Welcome, {{ current_user.name }}</h3>
+
+        <ul>
+            <li><a href="/home">Dashboard</a></li>
+            <li><a href="/result">Results</a></li>
+            <li><a href="/payment">Payments</a></li>
+            <li><a href="/profile">Profile</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="profile-card">
+
+            <!-- LEFT PROFILE -->
+            <div class="profile-left">
+                <img src="{{ url_for('static', filename='default.png') }}" onclick="showUpload()" id="profilePic">
+                <h3>{{ current_user.name }}</h3>
+                <p>{{ current_user.email }}</p>
+                <div class="form-group">
+    <label>Roll Number</label>
+    <input type="text" value="{{ current_user.sno }}" readonly class="readonly">
+</div>
+
+                <!-- Upload Option -->
+                <div class="upload-box" id="uploadBox">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="file" name="photo">
+                        <button class="btn">Upload</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <div class="profile-form">
+                <h2>Profile Settings</h2>
+                
+
+                <form method="POST">
+
+                    <div class="row">
+                        <div class="form-group">
+                            <input type="text" name="fname" placeholder="First Name">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="lname" placeholder="Surname">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="phone" placeholder="Mobile Number">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="addr1" placeholder="Address Line 1">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="addr2" placeholder="Address Line 2">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" name="email" value="{{ current_user.email }}">
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <input type="text" name="country" placeholder="Country">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="region" placeholder="Region">
+                        </div>
+                    </div>
+                    <div class="form-group">
+    <label>Institution</label>
+    <input type="text" value="{{ current_user.institution }}" readonly class="readonly">
+</div>
+
+                    <button class="btn">Save Profile</button>
+
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
