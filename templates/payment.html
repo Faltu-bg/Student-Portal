@@ -1,127 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Fee Status</title>
-
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-
-<style>
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #f5f9ff, #eef6ff);
-    margin: 0;
-    padding: 30px;
-}
-
-/* TITLE */
-h1 {
-    text-align: center;
-    color: #1e3a8a;
-    margin-bottom: 25px;
-}
-
-/* TABLE WRAPPER */
-.table-container {
-    width: 85%;
-    margin: auto;
-    background: white;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-}
-
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-/* HEADER */
-th {
-    background: #cfe6ff;
-    color: #1e3a8a;
-    padding: 14px;
-    font-size: 15px;
-}
-
-/* ROWS */
-td {
-    padding: 14px;
-    text-align: center;
-    border-bottom: 1px solid #eef2ff;
-    font-size: 14px;
-}
-
-tr:hover {
-    background: #f3f8ff;
-}
-
-/* STATUS */
-.paid {
-    color: #16a34a;
-    font-weight: 600;
-}
-
-.pending {
-    color: #dc2626;
-    font-weight: 600;
-}
-
-/* BUTTON */
-button {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-}
-
-.pay-btn {
-    background: #3b82f6;
-    color: white;
-}
-
-.pay-btn:hover {
-    background: #2563eb;
-}
-
-.disabled-btn {
-    background: #e5e7eb;
-    color: #6b7280;
-    cursor: not-allowed;
-}
-
-/* BADGE EFFECT */
-.badge {
-    padding: 4px 10px;
-    border-radius: 8px;
-}
-.receipt-btn {
-    display: inline-block;
-    padding: 8px 14px;
-    border-radius: 8px;
-    background: #60a5fa; /* light blue */
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
-    transition: 0.2s;
-}
-
-.receipt-btn:hover {
-    background: #3b82f6; /* slightly darker on hover */
-}
-
-.receipt-btn:hover {
-    background: #15803d;
-}
-</style>
-</head>
-
-<body>
-
+{% extends "base.html" %}
+{% block content %}
 <div class="container mt-4 p-4">
 
 <h3 class="mb-4">Semester Fee Payment</h3>
@@ -163,9 +41,10 @@ button {
      <td>
        
     {% if sem_status.get(sem) == "paid" and sem_payment.get(sem) %}
-        <a href="/payment/download_receipt/{{ sem_payment[sem].sno }}" class="receipt-btn">
-            📄 Download Receipt
-        </a>
+        <a href="/payment/download_receipt/{{ sem_payment[sem].sno }}"
+   class="btn btn-primary btn-sm d-inline-block">
+    📄 Download Receipt
+</a>
     {% else %}
         <span style="color: #9ca3af;">Not Available</span>
     {% endif %}
@@ -176,11 +55,7 @@ button {
 {% endfor %}
 
 </table>
-
-</div>
-
-</body>
-</html>
+{% endblock %}
 
 <script>
 async function payNow(sem) {
