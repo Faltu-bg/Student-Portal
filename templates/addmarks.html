@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Add Marks{% endblock %}
+
+{% block content %}
+
+<h2>Add Marks</h2>
+
+
+<form method="GET">
+    <select name="student_id" onchange="this.form.submit()">
+        <option value="">Select Student</option>
+
+        {% for s in students %}
+        <option value="{{s.sno}}"
+            {% if selected_student and selected_student.sno == s.sno %}selected{% endif %}>
+            {{s.name}}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+
+{% if selected_student %}
+
+<form method="GET">
+
+    <input type="hidden" name="student_id" value="{{selected_student.sno}}">
+
+    <label>Semester:</label>
+    <select name="sem" onchange="this.form.submit()">
+
+        <option value="">All Semesters</option>
+
+        {% for i in range(1, 9) %}
+        <option value="{{i}}"
+            {% if selected_sem == i %}selected{% endif %}>
+            Semester {{i}}
+        </option>
+        {% endfor %}
+
+    </select>
+</form>
+
+{% endif %}
+
+
+{% if selected_student %}
+
+<form method="POST">
+
+    <input type="hidden" name="student_id" value="{{selected_student.sno}}">
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Course</th>
+            <th>Internal</th>
+            <th>External</th>
+            <th>Mid</th>
+        </tr>
+
+        {% for e in enrollments %}
+        <tr>
+            <td>{{ e.course.name }}</td>
+
+            <td>
+                <input type="number"
+                       name="int_{{e.course.sno}}"
+                       value="{{ marks_map[e.course.sno].intmarks if e.course.sno in marks_map else '' }}">
+            </td>
+
+            <td>
+                <input type="number"
+                       name="ext_{{e.course.sno}}"
+                       value="{{ marks_map[e.course.sno].extmarks if e.course.sno in marks_map else '' }}">
+            </td>
+
+            <td>
+                <input type="number"
+                       name="mid_{{e.course.sno}}"
+                       value="{{ marks_map[e.course.sno].midmarks if e.course.sno in marks_map else '' }}">
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <button type="submit">Save Marks</button>
+
+</form>
+
+{% endif %}
+
+{% endblock %}

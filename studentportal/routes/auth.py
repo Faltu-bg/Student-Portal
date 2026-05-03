@@ -15,7 +15,7 @@ def login():
         print("PASSWORD:", password)
         user=Student.query.filter_by(sno=username).first()
         if not user:
-            user=Teacher.query.filter_by(name=username).first()
+            user=Teacher.query.filter_by(sno=username).first()
        
         if user:
             if password == user.hashed_password:

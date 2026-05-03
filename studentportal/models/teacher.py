@@ -7,7 +7,7 @@ class Teacher(db.Model, UserMixin):
     sno = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32), nullable=False)
     hashed_password = db.Column(db.String(60), nullable=False)
-
+    role = db.Column(db.String(20), default="teacher")
     courses = db.relationship('Course', back_populates='teacher', cascade="all, delete")
 
     def get_id(self):

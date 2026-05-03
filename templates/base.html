@@ -184,13 +184,24 @@ function showUpload() {
         <h3>Welcome, {{ current_user.name }}</h3>
 
         <ul>
-            <li><a href="/home">Dashboard</a></li>
-            <li><a href="/result">Results</a></li>
-            <li><a href="/payment">Payments</a></li>
-            <li><a href="/profile">Profile</a></li>
-            <li><a href="/change-password">Change Password</a></li>
-            <li><a href="/logout">Logout</a></li>
-        </ul>
+    
+
+    <!-- Student-only pages -->
+    {% if current_user.role == "student" %}
+    <li><a href="/home">Dashboard</a></li>
+        <li><a href="/result">Results</a></li>
+        <li><a href="/payment">Payments</a></li>
+    {% endif %}
+
+    <!-- Teacher-only pages -->
+    {% if current_user.role == "teacher" %}
+        <li><a href="/add-marks">Add Marks</a></li>
+    {% endif %}
+
+    <li><a href="/profile">Profile</a></li>
+    <li><a href="/change-password">Change Password</a></li>
+    <li><a href="/logout">Logout</a></li>
+</ul>
     </div>
 
     <!-- MAIN CONTENT -->

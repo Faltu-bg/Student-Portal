@@ -30,10 +30,11 @@ def create_app():
 
         return None
 
-    from studentportal.routes import auth_bp,pay_bp,student_bp
+    from studentportal.routes import auth_bp,pay_bp,student_bp,marks_bp
 
     app.register_blueprint(auth_bp,url_prefix='/auth')
     app.register_blueprint(pay_bp,url_prefix='/payment')
     app.register_blueprint(student_bp)
+    app.register_blueprint(marks_bp)
 
     return app
