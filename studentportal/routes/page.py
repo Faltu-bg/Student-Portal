@@ -1,7 +1,11 @@
-from flask import Blueprint,render_template,request
+from flask import Blueprint,render_template,request,redirect,flash
 from studentportal.models import *
 from flask_login import login_required,current_user
 from studentportal.db import db
+from werkzeug.utils import secure_filename
+import os
+from flask import current_app
+
 
 student_bp=Blueprint("student",__name__)
 
@@ -67,10 +71,26 @@ def result():
         selected_sem=selected_sem
     )
 
-@student_bp.route("/profile")
+@student_bp.route("/profile", methods=['GET','POST'])
 def profile():
-    
-    return render_template("profile.html") 
+
+    if request.method=='POST':
+        file = request.files.get("photo")
+        if file and file.filename != "":
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            current_user.photo = filename
+        current_user.name = request.form.get("fname")
+        current_user.phone = request.form.get("phone")
+        current_user.address = request.form.get("addr1")
+        current_user.email = request.form.get("email")
+        current_user.country = request.form.get("country")
+        current_user.region = request.form.get("region")
+
+        db.session.commit()
+        flash("Profile updated successfully")
+        return redirect("/profile")
+    return render_template("profile.html")    
 
 @student_bp.route("/password")
 def password():

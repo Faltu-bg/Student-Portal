@@ -6,10 +6,11 @@ import os
 
 def create_app():
     template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
-    app= Flask(__name__,template_folder=template_path)
+    app= Flask(__name__,template_folder=template_path,static_folder="static")
     app.secret_key='super-secret-key'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./student.db'
-
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     db.init_app(app)
     logman=LoginManager()
     logman.init_app(app)
