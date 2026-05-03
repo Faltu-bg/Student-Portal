@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="profile-card">
+
+            <!-- LEFT PROFILE -->
+            <div class="profile-left">
+                <img src="{{ url_for('static', filename='default.png') }}" onclick="showUpload()" id="profilePic">
+                <h3>{{ current_user.name }}</h3>
+                <p>{{ current_user.email }}</p>
+                <div class="form-group">
+    <label>Roll Number</label>
+    <input type="text" value="{{ current_user.sno }}" readonly class="readonly">
+</div>
+
+                <!-- Upload Option -->
+                <div class="upload-box" id="uploadBox">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="file" name="photo">
+                        <button class="btn">Upload</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <div class="profile-form">
+                <h2>Profile Settings</h2>
+                
+
+                <form method="POST">
+
+                    <div class="row">
+                        <div class="form-group">
+                            <input type="text" name="fname" placeholder="First Name" value="{{current_user.name}}">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="lname" placeholder="Surname">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="phone" placeholder="Mobile Number">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="addr1" placeholder="Address Line 1">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="addr2" placeholder="Address Line 2">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" name="email" value="{{ current_user.email }}">
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <input type="text" name="country" placeholder="Country">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="region" placeholder="Region">
+                        </div>
+                    </div>
+                    <div class="form-group">
+    <label>Institution</label>
+    <input type="text" value="{{ current_user.institution }}" readonly class="readonly">
+</div>
+
+                    <button class="btn">Save Profile</button>
+
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}
