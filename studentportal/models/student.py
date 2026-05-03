@@ -9,6 +9,7 @@ class Student(db.Model, UserMixin):
     date = db.Column(db.String(12))
     phone = db.Column(db.String(15))
     photo = db.Column(db.String(100))
+    role = db.Column(db.String(20), default="student")
 
     address = db.Column(db.String(200))
     country = db.Column(db.String(50))
