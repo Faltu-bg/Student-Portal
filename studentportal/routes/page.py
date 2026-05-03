@@ -5,9 +5,17 @@ from studentportal.db import db
 from werkzeug.utils import secure_filename
 import os
 from flask import current_app
+import random,string
+from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 
 student_bp=Blueprint("student",__name__)
+
+def randompass(length=6):
+    characters = string.ascii_letters + string.digits  # Letters and digits
+    return ''.join(random.choice(characters) for i in range(length))
+
 
 @student_bp.route("/")
 @login_required
@@ -57,6 +65,17 @@ def add_student():
         country = request.form.get("country")
         region = request.form.get("region")
         sno = request.form.get("sno")
+        sem = request.form.get("sem")
+        
+
+        current_year = datetime.now().year
+        last_student = Student.query.order_by(Student.sno.desc()).first()  # Get the last student by sno
+        last_id = last_student.sno if last_student else 0  # If no students exist, start from 0
+        new_id=last_id+1
+        sno = f"{current_year}{new_id:04d}"
+
+        random_password = randompass(length=6)
+        hashed_password=generate_password_hash(random_password)
 
         photo = request.files.get("photo")
         if photo and photo.filename != "":
@@ -72,7 +91,7 @@ def add_student():
             email=email,
             country=country,
             region=region,
-            hashed_password="123",
+            hashed_password=hashed_password,
             photo=filename,
             sno=sno
         )
@@ -80,6 +99,14 @@ def add_student():
         db.session.commit()
 
         flash("Student added successfully!")
+        courses = Course.query.filter_by(sem=sem).all()
+        for course in courses:
+            new_enrollment = Enroll(student_id=new_student.sno, course_id=course.sno)
+            db.session.add(new_enrollment)
+
+        db.session.commit()
+
+        flash("Student added and enrolled in respective courses successfully!")
     return render_template("addstudent.html")
 
 @student_bp.route("/result")
