@@ -3,92 +3,93 @@
 {% block title %}Add Marks{% endblock %}
 
 {% block content %}
-
+<!-- Include jQuery (Required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Include Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Include Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <h2>Add Marks</h2>
 
-
-<form method="GET">
-    <select name="student_id" onchange="this.form.submit()">
-        <option value="">Select Student</option>
-
+<!-- Student Selection Form -->
+<form method="GET" id="studentForm">
+    <label>Select Student:</label>
+    <!-- Added class "searchable-select" and style for width -->
+    <select name="student_id" class="searchable-select" onchange="this.form.submit()" style="width: 300px;">
+        <option value="">Search for a student...</option>
         {% for s in students %}
         <option value="{{s.sno}}"
             {% if selected_student and selected_student.sno == s.sno %}selected{% endif %}>
-            {{s.name}}
+            {{s.name}} (ID: {{s.sno}})
         </option>
         {% endfor %}
     </select>
 </form>
 
+<hr>
 
 {% if selected_student %}
-
+<!-- Semester Filter -->
 <form method="GET">
-
     <input type="hidden" name="student_id" value="{{selected_student.sno}}">
-
     <label>Semester:</label>
     <select name="sem" onchange="this.form.submit()">
-
         <option value="">All Semesters</option>
-
         {% for i in range(1, 9) %}
-        <option value="{{i}}"
-            {% if selected_sem == i %}selected{% endif %}>
+        <option value="{{i}}" {% if selected_sem == i %}selected{% endif %}>
             Semester {{i}}
         </option>
         {% endfor %}
-
     </select>
 </form>
 
-{% endif %}
-
-
-{% if selected_student %}
-
+<!-- Marks Entry Form -->
 <form method="POST">
-
     <input type="hidden" name="student_id" value="{{selected_student.sno}}">
-
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Course</th>
-            <th>Internal</th>
-            <th>External</th>
-            <th>Mid</th>
-        </tr>
-
-        {% for e in enrollments %}
-        <tr>
-            <td>{{ e.course.name }}</td>
-
-            <td>
-                <input type="number"
-                       name="int_{{e.course.sno}}"
-                       value="{{ marks_map[e.course.sno].intmarks if e.course.sno in marks_map else '' }}">
-            </td>
-
-            <td>
-                <input type="number"
-                       name="ext_{{e.course.sno}}"
-                       value="{{ marks_map[e.course.sno].extmarks if e.course.sno in marks_map else '' }}">
-            </td>
-
-            <td>
-                <input type="number"
-                       name="mid_{{e.course.sno}}"
-                       value="{{ marks_map[e.course.sno].midmarks if e.course.sno in marks_map else '' }}">
-            </td>
-        </tr>
-        {% endfor %}
+    
+    <table border="1" cellpadding="8" style="margin-top: 20px; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th>Course</th>
+                <th>Internal</th>
+                <th>External</th>
+                <th>Mid</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in enrollments %}
+            <tr>
+                <td>{{ e.course.name }}</td>
+                <td>
+                    <input type="number" name="int_{{e.course.sno}}"
+                           value="{{ marks_map[e.course.sno].intmarks if e.course.sno in marks_map else '' }}">
+                </td>
+                <td>
+                    <input type="number" name="ext_{{e.course.sno}}"
+                           value="{{ marks_map[e.course.sno].extmarks if e.course.sno in marks_map else '' }}">
+                </td>
+                <td>
+                    <input type="number" name="mid_{{e.course.sno}}"
+                           value="{{ marks_map[e.course.sno].midmarks if e.course.sno in marks_map else '' }}">
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 
     <br>
-    <button type="submit">Save Marks</button>
-
+    <button type="submit" style="padding: 10px 20px; cursor: pointer;">Save Marks</button>
 </form>
-
 {% endif %}
+
+<!-- Initialize Select2 -->
+<script>
+    $(document).ready(function() {
+        $('.searchable-select').select2({
+            placeholder: "Type student name...",
+            allowClear: true
+        });
+    });
+</script>
 
 {% endblock %}

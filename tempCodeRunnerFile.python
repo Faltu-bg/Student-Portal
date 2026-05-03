@@ -1,11 +1,15 @@
 from flask import Flask,render_template,request,redirect,flash,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 import json
 import os
 from datetime import datetime
 from flask_login import login_user,current_user,logout_user,LoginManager,UserMixin,login_required
 import razorpay 
+import string,random
+
+
 
 local_server=True
 
@@ -13,8 +17,8 @@ local_server=True
 #     parames = json.load(f)["params"]
 
 
-
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.secret_key='super-secret-key'
 # app.config['upload']=parames['upload']
 if(local_server==True):
@@ -31,7 +35,6 @@ client = razorpay.Client(auth=("your-key", "razorpay-key"))
 
 
 
-
 @logman.user_loader
 def load_user(user_id):
     role,id=user_id.split("-")
@@ -40,13 +43,26 @@ def load_user(user_id):
     elif role=="teacher":
         return Teacher.query.get(int(id))
 
+def randompass(length=6):
+    characters = string.ascii_letters + string.digits 
+    return ''.join(random.choice(characters) for i in range(length))
+    
+
+
 class Student(db.Model, UserMixin):
     sno = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False)
-    hashed_password = db.Column(db.String(60), nullable=False)
-    email = db.Column(db.String(50))
+    hashed_password = db.Column(db.String(256), nullable=False)
+    email = db.Column(db.String(50), unique=True)
     date = db.Column(db.String(12))
+    phone = db.Column(db.String(15))
+    photo = db.Column(db.String(100))
 
+    address = db.Column(db.String(200))
+    country = db.Column(db.String(50))
+    region = db.Column(db.String(50))
+    role = db.Column(db.String(20), default="student")
+    sem=db.Column(db.Integer)
     enrollments = db.relationship('Enroll', back_populates='student', cascade="all, delete")
     payments = db.relationship('Payment', back_populates='student', cascade="all, delete")
     marks = db.relationship('Marks', back_populates='student', cascade="all, delete")
@@ -61,7 +77,7 @@ class Teacher(db.Model, UserMixin):
     sno = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32), nullable=False)
     hashed_password = db.Column(db.String(60), nullable=False)
-
+    role = db.Column(db.String(20), default="teacher")
     courses = db.relationship('Course', back_populates='teacher', cascade="all, delete")
 
     def get_id(self):
@@ -91,6 +107,7 @@ class Enroll(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('course.sno'), nullable=False)
 
     marks = db.Column(db.Integer)
+    status=db.Column(db.String(30))
 
     student = db.relationship('Student', back_populates='enrollments')
     course = db.relationship('Course', back_populates='enrollments')
@@ -152,16 +169,61 @@ def add():
 @app.route("/show")
 def show():
     s1 = Student.query.all()
+    pay=Payment.query.all()
     output = ""
     for s in s1:
         output += f"{s.sno} - {s.name} - {s.hashed_password}<br>"
+        flash( f"{output}")
+    
+    s2= Teacher.query.all()
+    for s in s2:
+        output+= f"{s.sno} - {s.name} - {s.hashed_password}"
+    return output
+
+@app.route("/showpay")
+def show1():
+
+    pay=Payment.query.all()
+    output = ""
+    for s in pay:
+        output += f"{s.sno} - {s.student_id} - {s.paymentmode}  - {s.paymenttype}  - {s.referenceid}  - {s.amount} <br>"
     return output
 
 @app.route("/home")
 @login_required
 def home():
-   
-    return render_template("home.html")
+    student = Student.query.get(current_user.sno)
+
+    enrollments = Enroll.query.filter_by(student_id=student.sno).all()
+    marks = Marks.query.filter_by(student_id=student.sno).all()
+    payments = Payment.query.filter_by(student_id=student.sno).all()
+
+    
+    sem_status = {}
+
+    for p in payments:
+        if p.sem not in sem_status:
+            sem_status[p.sem] = "pending"
+
+        if p.status == "success":
+            sem_status[p.sem] = "paid"
+
+    # Average marks
+    avg_marks = 0
+    if marks:
+        avg_marks = sum(
+            (m.intmarks or 0) + (m.extmarks or 0) + (m.midmarks or 0)
+            for m in marks
+        ) / len(marks)
+
+    return render_template(
+        "home.html",
+        student=student,
+        enrollments=enrollments,
+        marks=marks,
+        sem_status=sem_status,   
+        avg_marks=avg_marks
+    )
 
 @app.route("/login",methods=['POST','GET'])
 def login():
@@ -169,17 +231,19 @@ def login():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
+        hashed_pass=generate_password_hash(password)
         
         user=Student.query.filter_by(sno=username).first()
+        
         if not user:
-            user=Teacher.query.filter_by(name=username).first()
+            user=Teacher.query.filter_by(sno=username).first()
         if user:
-            if password == user.hashed_password:
+            if hashed_pass == user.hashed_password or password == user.hashed_password:
                 login_user(user)
                 return redirect("/home")
             else:
 
-                flash('Wrong Password')
+                flash('Inavlid Credentials')
         else:
 
             print("User not found")
@@ -191,22 +255,30 @@ def login():
 def result():
 
     student_id = current_user.sno
+    selected_sem = request.args.get("sem", type=int)
 
     student = Student.query.get(student_id)
-    if not student:
-        return "Student not found", 404
 
-    marks_data = db.session.query(Marks, Course).join(Course).filter(
+    query = db.session.query(Marks, Course).join(Course).filter(
         Marks.student_id == student_id
-    ).all()
+    )
 
-    sems = sorted({course.sem for _, course in marks_data})
+    # Apply semester filter if selected
+    if selected_sem:
+        query = query.filter(Course.sem == selected_sem)
+
+    marks_data = query.all()
+
+    # Get all available semesters
+    all_sems = db.session.query(Course.sem).distinct().all()
+    all_sems = sorted([s[0] for s in all_sems])
 
     return render_template(
         "result.html",
         student=student,
         marks_data=marks_data,
-        sems=sems
+        sems=all_sems,
+        selected_sem=selected_sem
     )
 
 
@@ -232,7 +304,16 @@ def create_order():
         "key": "key"
     })
 
+@app.route("/download_receipt/<int:receipt>")
+def download_receipt(receipt):
+    print(f"{receipt}")
+    user=current_user.sno
+    student = Student.query.get(user)
+    payment=Payment.query.filter_by(student_id=user, sno=receipt).first()
+    if not payment:
+        return "Unauthorized or receipt not found", 404
 
+    return render_template("receipt.html",student=student,payment=payment)
 
 # @app.route("/create-payment/<int:payment_id>", methods=['POST'])
 # @login_required
@@ -257,7 +338,7 @@ def payment1():
     i=current_user.sno
     pay=Payment.query.filter_by(student_id=i).all()
 
-
+    sem_payment = {}
     sem_status = {}
 
     for p in pay:
@@ -266,24 +347,16 @@ def payment1():
 
         if p.status == "success":
             sem_status[p.sem] = "paid"
+            sem_payment[p.sem] = p
 
-    return render_template("payment.html",pay=pay,sem_status=sem_status)
+        
+
+    return render_template(
+        "payment.html",
+        pay=pay,
+        sem_status=sem_status,
+        sem_payment=sem_payment)
   
-# @app.route('/verify_payment', methods=['POST'])
-# def verify_payment():
-#     data = request.get_json()
-
-#     order_id = data['razorpay_order_id']
-#     payment_id = data['razorpay_payment_id']
-#     signature = data['razorpay_signature']
-#     sem = data['semester']
-
-#     # verify signature here...
-
-#     # if valid:
-#     print("Paid");
-
-#     return jsonify({"status": "Payment successful"})
 
 @app.route('/verify_payment', methods=['POST'])
 @login_required
@@ -326,7 +399,49 @@ def verify_payment():
         return jsonify({"status": "Verification failed"})
 
 
+@app.route("/profile", methods=['GET','POST'])
+def profile():
 
+    if request.method=='POST':
+        file = request.files.get("photo")
+        if file and file.filename != "":
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            current_user.photo = filename
+        current_user.name = request.form.get("fname")
+        current_user.phone = request.form.get("phone")
+        current_user.address = request.form.get("addr1")
+        current_user.email = request.form.get("email")
+        current_user.country = request.form.get("country")
+        current_user.region = request.form.get("region")
+
+        db.session.commit()
+        flash("Profile updated successfully")
+        return redirect("/profile")
+    return render_template("profile.html")    
+
+@app.route("/change-password",methods=['POST'])
+@login_required
+def changepass():
+    old_password=request.form.get("old_password")
+    new_password=request.form.get("new_password")
+    confirm_password=request.form.get("confirm_password")
+
+    if old_password == current_user.hashed_password:
+        if new_password==confirm_password:
+            new_password=generate_password_hash(new_password)
+            current_user.hashed_password = new_password
+            db.session.commit()
+            flash("Password change successfully")
+            return redirect("/password")
+        else:
+            flash("New passwords do not match")
+            
+    else:    
+        flash("Old password is incorrect")
+
+    return redirect("/password")
+    
 
 @app.route("/logout",methods=['GET'])
 @login_required
@@ -334,11 +449,185 @@ def logout():
     logout_user()
     print("successfull")
 
+@app.route("/add-student", methods=["GET", "POST"])
+@login_required
+def add_student():
+    if current_user.role != "teacher":  
+        return "Unauthorized access", 403
 
+    if request.method == "POST":
+        # Get form data
+        fname = request.form.get("fname")
+        lname = request.form.get("lname")
+        phone = request.form.get("phone")
+        addr1 = request.form.get("addr1")
+        addr2 = request.form.get("addr2")
+        email = request.form.get("email")
+        country = request.form.get("country")
+        region = request.form.get("region")
+        sem=request.form.get("sem")
+        institution = request.form.get("institution")
+        current_year = datetime.now().year
+        last_student = Student.query.order_by(Student.sno.desc()).first()  # Get the last student by sno
+        last_id = last_student.sno if last_student else 0  # If no students exist, start from 0
+        new_id=last_id+1
+        sno = f"{current_year}{new_id:04d}"
+
+
+        random_password = randompass(length=6)
+        hashed_password=generate_password_hash(random_password)
+
+        # Handle file upload
+        photo = request.files.get("photo")
+        if photo and photo.filename != "":
+            filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        else:
+            filename = "default.png"
+
+  
+        new_student = Student(
+            name=f"{fname} {lname}",
+            phone=phone,
+            address=f"{addr1} {addr2}",
+            email=email,
+            country=country,
+            region=region,
+            hashed_password=hashed_password,
+            photo=filename,
+            sno=sno,
+            sem=sem
+        )
+
+        db.session.add(new_student)
+        db.session.commit()
+        flash("Student added successfully!")
+
+        courses = Course.query.filter_by(sem=sem).all()
+        for course in courses:
+            new_enrollment = Enroll(student_id=new_student.sno, course_id=course.sno)
+            db.session.add(new_enrollment)
+
+        db.session.commit()
+
+        flash("Student added and enrolled in respective courses successfully!")
+        return redirect("/show")
+
+    return render_template("addstudent.html")
+
+@app.route("/add-marks", methods=["GET", "POST"])
+@login_required
+def add_marks():
+    if current_user.role!="teacher":
+        return "unauthorized access",403
+    students = Student.query.all()
+    selected_student = None
+    enrollments = []
+    marks_map = {}
+
+    student_id = request.values.get("student_id")
+    selected_sem = request.values.get("sem", type=int)
+
+    if student_id:
+        selected_student = Student.query.get(student_id)
+
+        # 👇 filter enrollments by semester (IMPORTANT)
+        query = Enroll.query.filter_by(student_id=student_id)
+
+        if selected_sem:
+            query = query.join(Course).filter(Course.sem == selected_sem)
+
+        enrollments = query.all()
+
+        # load marks
+        marks_list = Marks.query.filter_by(student_id=student_id).all()
+        marks_map = {m.course_id: m for m in marks_list}
+
+    if request.method == "POST":
+        for e in enrollments:
+            course_id = e.course_id
+
+            intmarks = request.form.get(f"int_{course_id}")
+            midmarks = request.form.get(f"mid_{course_id}")
+            extmarks = request.form.get(f"ext_{course_id}")
+
+            
+            if intmarks is None or midmarks is None or extmarks is None:
+                status = "Not Attempted"
+            else:
+                if intmarks and midmarks and extmarks:
+                    if intmarks >= 50 and midmarks>=12 and extmarks>=22:
+                        status="PASSED"
+                    else:
+                        status="Failed"
+
+            marks = Marks.query.filter_by(
+                student_id=student_id,
+                course_id=course_id
+            ).first()
+
+            if marks:
+                marks.intmarks = intmarks
+                marks.midmarks = midmarks
+                marks.extmarks = extmarks
+            else:
+                db.session.add(Marks(
+                    student_id=student_id,
+                    course_id=course_id,
+                    intmarks=intmarks,
+                    midmarks=midmarks,
+                    extmarks=extmarks
+                ))
+
+        db.session.commit()
+        flash("Marks updated")
+
+    return render_template(
+        "addmarks.html",
+        students=students,
+        selected_student=selected_student,
+        enrollments=enrollments,
+        marks_map=marks_map,
+        selected_sem=selected_sem
+    )
+@app.route("/seed")
+def seed():
+
+    db.drop_all()
+    db.create_all()
+
+    # Teachers
+    t1 = Teacher(sno=12,name="Dr Smith", hashed_password="123")
+
+    # Students
+    s1 = Student(name="Rahul", hashed_password="123", email="rahul@test.com")
+    s2 = Student(name="Aman", hashed_password="123", email="aman@test.com")
+
+    db.session.add_all([t1, s1, s2])
+    db.session.commit()
+
+    # Courses
+    c1 = Course(name="Math", sem=1, teacher_id=t1.sno)
+    c2 = Course(name="Physics", sem=1, teacher_id=t1.sno)
+    c3 = Course(name="CS", sem=2, teacher_id=t1.sno)
+
+    db.session.add_all([c1, c2, c3])
+    db.session.commit()
+
+    # Enrollments
+    e1 = Enroll(student_id=s1.sno, course_id=c1.sno)
+    e2 = Enroll(student_id=s1.sno, course_id=c2.sno)
+    e3 = Enroll(student_id=s2.sno, course_id=c3.sno)
+
+    db.session.add_all([e1, e2, e3])
+    db.session.commit()
+
+    return "Database seeded successfully"
 
 with app.app_context():
     # db.drop_all()
     db.create_all()
+
 
 if __name__ == "__main__":
     app.run(debug=True,host='127.0.0.1',port=5555)

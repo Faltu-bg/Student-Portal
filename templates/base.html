@@ -196,6 +196,7 @@ function showUpload() {
     <!-- Teacher-only pages -->
     {% if current_user.role == "teacher" %}
         <li><a href="/add-marks">Add Marks</a></li>
+        <li><a href="/add-student">Add Student</a></li>
     {% endif %}
 
     <li><a href="/profile">Profile</a></li>
