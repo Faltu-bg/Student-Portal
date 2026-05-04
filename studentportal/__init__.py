@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from studentportal.db import db
 from studentportal.models import *
 import os
+from flask_mail import Mail
 
 def create_app():
     template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
@@ -15,6 +16,16 @@ def create_app():
     logman=LoginManager()
     logman.init_app(app)
     logman.login_view="auth.login"
+
+    app.config['MAIL_SERVER']='smtp.gmail.com'
+    app.config['MAIL_PORT']=587
+    app.config['MAIL_USERNAME']='240140107078.yadavharshjayram@gmail.com'
+    app.config['MAIL_PASSWORD']='cdze hbbk yupm keuf'
+    app.config['MAIL_USE_TLS']=True
+    app.config['MAIL_USE_SSL']=False
+    mail=Mail(app) 
+    app.extensions['mail'] = mail
+
 
     @logman.user_loader
     def load_user(user_id):
