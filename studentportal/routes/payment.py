@@ -7,7 +7,7 @@ from studentportal.fees import is_fees_paid
 
 
 pay_bp=Blueprint("payment",__name__)
-client = razorpay.Client(auth=("your-key", "razorpay-key"))
+client = razorpay.Client(auth=("rzp_test_SlCpqAvq3b6coH", "k0rkVVpAWkjLbXJ3G9CT2FMX"))
 
 @pay_bp.route("/payment",methods=['GET'])
 @login_required
@@ -52,7 +52,7 @@ def create_order():
     return jsonify({
         "order_id": order['id'],
         "amount": amount,
-        "key": "key"
+        "key": "rzp_test_SlCpqAvq3b6coH"
     })
 
 @pay_bp.route('/verify_payment', methods=['POST'])

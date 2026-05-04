@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4 p-4">
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <h3 class="mb-4">Semester Fee Payment</h3>
 
 <table class="table table-bordered text-center">
@@ -55,12 +55,11 @@
 {% endfor %}
 
 </table>
-{% endblock %}
 
 <script>
 async function payNow(sem) {
 
-    const response = await fetch("/create_order", {
+    const response = await fetch("/payment/create_order", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -85,7 +84,7 @@ async function payNow(sem) {
         description: "Semester " + sem + " Fee Payment",
 
         handler: function (response) {
-            fetch("/verify_payment", {
+            fetch("/payment/verify_payment", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -115,3 +114,6 @@ async function payNow(sem) {
     rzp.open();
 }
 </script>
+{% endblock %}
+
+
