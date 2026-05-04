@@ -8,7 +8,7 @@ from flask import current_app
 import random,string
 from datetime import datetime
 from werkzeug.security import generate_password_hash
-
+from flask_mail import Mail,Message
 
 student_bp=Blueprint("student",__name__)
 
@@ -105,6 +105,15 @@ def add_student():
             db.session.add(new_enrollment)
 
         db.session.commit()
+        mail_mes = current_app.extensions.get('mail')
+        msg = Message(
+        subject="Your Account Details",
+        sender=current_app.config['MAIL_USERNAME'],
+        recipients=[email],
+        body=f"Welcome! Your ID is {sno} and temporary password is {random_password}"
+        )
+
+        mail_mes.send(msg)
 
         flash("Student added and enrolled in respective courses successfully!")
     return render_template("addstudent.html")

@@ -1,13 +1,14 @@
 from flask import Flask,render_template,request,redirect,flash,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash,check_password_hash
 import json
 import os
 from datetime import datetime
 from flask_login import login_user,current_user,logout_user,LoginManager,UserMixin,login_required
 import razorpay 
 import string,random
+from flask_mail import Mail,Message
 
 
 
@@ -26,6 +27,16 @@ if(local_server==True):
 # else:
 #     app.config['SQLALCHEMY_DATABASE_URI'] = parames['online_uri']
 db = SQLAlchemy(app)
+
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT']=587
+app.config['MAIL_USERNAME']='240140107078.yadavharshjayram@gmail.com'
+app.config['MAIL_PASSWORD']='none'
+app.config['MAIL_USE_TLS']=True
+app.config['MAIL_USE_SSL']=False
+mail=Mail(app)
+
+
 
 logman=LoginManager()
 logman.init_app(app)
@@ -238,7 +249,7 @@ def login():
         if not user:
             user=Teacher.query.filter_by(sno=username).first()
         if user:
-            if hashed_pass == user.hashed_password or password == user.hashed_password:
+            if check_password_hash(user.hashed_password, hashed_pass) or password == user.hashed_password:
                 login_user(user)
                 return redirect("/home")
             else:
@@ -315,22 +326,6 @@ def download_receipt(receipt):
 
     return render_template("receipt.html",student=student,payment=payment)
 
-# @app.route("/create-payment/<int:payment_id>", methods=['POST'])
-# @login_required
-# def paying(payment_id):
-
-#     payment = Payment.query.filter_by(
-#         sno=payment_id,
-#         student_id=current_user.sno
-#     ).first()
-
-#     if not payment:
-#         return "Payment not found", 404
-
-#     payment.status = "success"
-#     db.session.commit()
-
-#     return redirect("/payment")
 
 @app.route("/payment",methods=['GET'])
 @login_required
@@ -509,6 +504,15 @@ def add_student():
             db.session.add(new_enrollment)
 
         db.session.commit()
+        subject="Your Student id is created"
+        msg = Message(
+        subject="Your Account Details",
+        sender=app.config['MAIL_USERNAME'],
+        recipients=[email],
+        body=f"Welcome! Your ID is {sno} and temporary password is {random_password}"
+        )
+
+        mail.send(msg)
 
         flash("Student added and enrolled in respective courses successfully!")
         return redirect("/show")
@@ -551,33 +555,40 @@ def add_marks():
             midmarks = request.form.get(f"mid_{course_id}")
             extmarks = request.form.get(f"ext_{course_id}")
 
-            
-            if intmarks is None or midmarks is None or extmarks is None:
-                status = "Not Attempted"
-            else:
-                if intmarks and midmarks and extmarks:
-                    if intmarks >= 50 and midmarks>=12 and extmarks>=22:
-                        status="PASSED"
+            try:
+                int_m = int(intmarks) if intmarks and intmarks.strip() != "" else None
+                mid_m = int(midmarks) if midmarks and midmarks.strip() != "" else None
+                ext_m = int(extmarks) if extmarks and extmarks.strip() != "" else None
+                
+                # 2. Determine Status (Enroll table update)
+                if int_m is not None and mid_m is not None and ext_m is not None:
+                    if int_m >= 50 and mid_m >= 12 and ext_m >= 22:
+                        e.status = "PASSED"
                     else:
-                        status="Failed"
+                        e.status = "FAILED"
+                else:
+                    e.status = "NOT ATTEMPTED"
 
-            marks = Marks.query.filter_by(
-                student_id=student_id,
-                course_id=course_id
-            ).first()
+                marks = Marks.query.filter_by(
+                    student_id=student_id,
+                    course_id=course_id
+                ).first()
 
-            if marks:
-                marks.intmarks = intmarks
-                marks.midmarks = midmarks
-                marks.extmarks = extmarks
-            else:
-                db.session.add(Marks(
+                if marks:
+                    marks.intmarks = intmarks
+                    marks.midmarks = midmarks
+                    marks.extmarks = extmarks
+                else:
+                    db.session.add(Marks(
                     student_id=student_id,
                     course_id=course_id,
                     intmarks=intmarks,
                     midmarks=midmarks,
                     extmarks=extmarks
-                ))
+                    ))
+            except ValueError:
+                flash(f"Invalid input for course ID {course_id}. Please enter numbers only.")
+                continue
 
         db.session.commit()
         flash("Marks updated")
@@ -590,6 +601,9 @@ def add_marks():
         marks_map=marks_map,
         selected_sem=selected_sem
     )
+
+
+
 @app.route("/seed")
 def seed():
 
