@@ -22,7 +22,10 @@ def login():
             if password == user.hashed_password or check_password_hash(user.hashed_password, password):
                 login_user(user)
                 print(f"Logged in user: {user}")
-                return redirect("/")
+                if user.role=="student":
+                    return redirect("/")
+                else:
+                    return redirect("/profile")
             else:
 
                 flash('Invalid Credentials')

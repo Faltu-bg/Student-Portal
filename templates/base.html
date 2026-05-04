@@ -155,10 +155,6 @@ function showUpload() {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <div class="app-container">
-<!-- PROFILE (navbar left) -->
-
-
-<!-- TOP NAVBAR -->
 
 
 <div class="app-container">
@@ -188,9 +184,9 @@ function showUpload() {
 
     <!-- Student-only pages -->
     {% if current_user.role == "student" %}
-    <li><a href="/home">Dashboard</a></li>
+    <li><a href="/">Dashboard</a></li>
         <li><a href="/result">Results</a></li>
-        <li><a href="/payment">Payments</a></li>
+        <li><a href="/payment/payment">Payments</a></li>
     {% endif %}
 
     <!-- Teacher-only pages -->
@@ -200,8 +196,8 @@ function showUpload() {
     {% endif %}
 
     <li><a href="/profile">Profile</a></li>
-    <li><a href="/change-password">Change Password</a></li>
-    <li><a href="/logout">Logout</a></li>
+    <li><a href="/password">Change Password</a></li>
+    <li><a href="/auth/logout">Logout</a></li>
 </ul>
     </div>
 
